@@ -3,8 +3,6 @@
 -- Victoria Productos Artesanales
 -- ========================================================
 
-CREATE DATABASE IF NOT EXISTS controlar_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE controlar_db;
 
 -- 1. Tabla: usuarios
 CREATE TABLE IF NOT EXISTS usuarios (
