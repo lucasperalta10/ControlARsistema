@@ -3,7 +3,6 @@
 -- Victoria Productos Artesanales
 -- ========================================================
 
-
 -- 1. Tabla: usuarios
 CREATE TABLE IF NOT EXISTS usuarios (
   id INT AUTO_INCREMENT PRIMARY KEY,
