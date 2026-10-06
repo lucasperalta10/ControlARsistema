@@ -1,0 +1,111 @@
+# ControlAR v1.0.0
+
+**Sistema de gestión para Victoria Productos Artesanales**
+
+---
+
+## 📌 Descripción general
+
+ControlAR es una Progressive Web App (PWA) Mobile-First diseñada para el control diario de stock, costos, márgenes de ganancia y precios de góndola de **Victoria Productos Artesanales**.
+
+El sistema cumple rigurosamente con la especificación técnica y funcional definida en [controlar.md](file:///c:/Users/SP/Desktop/ControlAR/docs/controlar.md).
+
+---
+
+## 📐 Regla oficial de cálculo de precios
+
+$$\text{Precio de góndola} = \frac{\text{Costo real}}{1 - \text{Margen}}$$
+
+* Cada producto posee su propio margen de ganancia independiente ($0\% \le \text{margen} < 100\%$).
+* El backend es la única fuente de verdad; calcula y valida el precio.
+* El frontend provee cálculo en tiempo real proyectado y asistente de costo unitario para productos fraccionados (ej: paquetes de gramos).
+
+---
+
+## 🏗️ Arquitectura del Proyecto
+
+```text
+ControlAR/
+├── backend/                      # Node.js + Express + MySQL API
+│   ├── src/
+│   │   ├── config/               # Conexión DB MySQL (con auto-init y fallback SQLite para dev)
+│   │   ├── controllers/          # auth, producto, stock, categoria, usuario, actividad, sistema
+│   │   ├── routes/               # Rutas REST
+│   │   ├── middleware/           # authMiddleware (JWT), roleMiddleware (SUPER_ADMIN), errorMiddleware
+│   │   ├── services/             # precioService, stockService (atómico), actividadService
+│   │   └── server.js             # Bootstrap del servidor
+│   ├── schema.sql                # DDL oficial de base de datos MySQL y seeds
+│   └── package.json
+│
+├── frontend/                     # React + Vite + PWA Mobile-First
+│   ├── src/
+│   │   ├── components/           # ProductCard, StockBadge, StockModal, Header, BottomNavigation
+│   │   ├── pages/                # Login, Inicio, Productos, Agregar, Detalle, Reponer, MiCuenta, AcercaDe, Admin
+│   │   ├── context/              # AuthContext (JWT, estado global de sesión)
+│   │   └── utils/                # formatters (pesos argentinos $ 20.000, unidades de venta)
+│   ├── public/                   # Manifest PWA y recursos gráficos
+│   └── package.json
+│
+└── docs/
+    └── controlar.md              # Especificación técnica oficial
+```
+
+---
+
+## 🚀 Puesta en marcha local
+
+### Prerrequisitos
+* Node.js v18+ y npm.
+* MySQL (opcional en desarrollo; el backend cuenta con auto-detección y base local de desarrollo si el servicio MySQL no está iniciado).
+
+### 1. Iniciar el Backend
+```bash
+cd backend
+npm install
+npm start
+```
+El servidor quedará disponible en `http://localhost:3001/api`.
+
+### 2. Iniciar el Frontend
+En otra terminal:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+La aplicación abrirá en `http://localhost:5173/`.
+
+---
+
+## 🔑 Credenciales iniciales (Seeds)
+
+| Rol | DNI | PIN inicial |
+| :--- | :--- | :--- |
+| **SUPER_ADMIN** (Administrador) | `99999999` | `1234` |
+| **USUARIO** (María) | `12345678` | `1234` |
+
+---
+
+## 🌐 Despliegue en Producción
+
+### Frontend (Vercel)
+1. Conectar el repositorio en [Vercel](https://vercel.com).
+2. Configurar el directorio raíz en `frontend`.
+3. Definir la variable de entorno:
+   - `VITE_API_URL`: URL del backend en Railway (ej: `https://controlar-api.up.railway.app/api`).
+4. Comando de build: `npm run build` (directorio de salida: `dist`).
+
+### Backend (Railway)
+1. Crear un proyecto en [Railway](https://railway.app).
+2. Agregar un servicio MySQL administrado.
+3. Importar el servicio Node.js desde la carpeta `backend`.
+4. Configurar las variables de entorno de producción:
+   - `PORT`: Provisto automáticamente por Railway.
+   - `DB_HOST`: Host de MySQL Railway (`MYSQLHOST`).
+   - `DB_PORT`: Puerto de MySQL Railway (`MYSQLPORT`).
+   - `DB_USER`: Usuario MySQL (`MYSQLUSER`).
+   - `DB_PASSWORD`: Contraseña MySQL (`MYSQLPASSWORD`).
+   - `DB_NAME`: Nombre de la BD (`MYSQLDATABASE`).
+   - `JWT_SECRET`: Clave aleatoria segura para firma de tokens.
+   - `CORS_ORIGIN`: URL de la aplicación en Vercel (ej: `https://controlar.vercel.app`).
+5. Ejecutar la inicialización del esquema importando `schema.sql`.
