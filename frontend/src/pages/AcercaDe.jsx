@@ -1,5 +1,4 @@
-import React from 'react';
-import { Package, Store, Code, Calendar, ShieldCheck } from 'lucide-react';
+import { Store } from 'lucide-react';
 
 export function AcercaDe() {
   return (
@@ -16,10 +15,29 @@ export function AcercaDe() {
       <div className="desktop-two-col">
         {/* Bloque Sistema ControlAR */}
         <div className="card" style={{ textAlign: 'center', padding: '24px 18px', marginBottom: 0 }}>
-          {/* Placeholder Logo ControlAR */}
-          <div className="placeholder-box" style={{ width: '100px', height: '100px', margin: '0 auto 16px auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <Package size={36} color="var(--primary)" />
-            <span style={{ fontSize: '0.65rem', marginTop: '4px' }}>[Logo ControlAR]</span>
+          {/* Logo Oficial ControlAR */}
+          <div style={{
+            width: '108px',
+            height: '108px',
+            margin: '0 auto 16px auto',
+            borderRadius: '22px',
+            overflow: 'hidden',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#090e17'
+          }}>
+            <img
+              src="/ControlARimagen.png"
+              alt="Logo oficial ControlAR"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                display: 'block'
+              }}
+            />
           </div>
 
           <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#fff', letterSpacing: '-0.5px' }}>
