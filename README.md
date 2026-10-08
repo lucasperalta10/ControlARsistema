@@ -77,12 +77,13 @@ La aplicación abrirá en `http://localhost:5173/`.
 
 ---
 
-## 🔑 Credenciales iniciales (Seeds)
+## 🔑 Credencial oficial de Administrador
 
 | Rol | DNI | PIN inicial |
 | :--- | :--- | :--- |
-| **SUPER_ADMIN** (Administrador) | `99999999` | `1234` |
-| **USUARIO** (María) | `12345678` | `1234` |
+| **SUPER_ADMIN** (Administrador) | `47115449` | `1234` |
+
+> *Nota: Los usuarios operativos del negocio (rol `USUARIO`) se crean y administran directamente desde el **Panel de Administración** > pestaña **Usuarios**.*
 
 ---
 
