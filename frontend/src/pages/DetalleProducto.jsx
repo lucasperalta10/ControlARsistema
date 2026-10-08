@@ -27,7 +27,6 @@ export function DetalleProducto({ productoId, onBack, onProductUpdated, onProduc
 
   // Campos para edición
   const [nombreEdit, setNombreEdit] = useState('');
-  const [precioCompraEdit, setPrecioCompraEdit] = useState('');
   const [costoRealEdit, setCostoRealEdit] = useState('');
   const [margenEdit, setMargenEdit] = useState('');
   const [stockMinimoEdit, setStockMinimoEdit] = useState('');
@@ -79,7 +78,7 @@ export function DetalleProducto({ productoId, onBack, onProductUpdated, onProduc
         method: 'PUT',
         body: {
           nombre: nombreEdit.trim(),
-          precio_compra: Number(precioCompraEdit) || 0,
+          precio_compra: Number(costoRealEdit) || 0,
           costo_real: Number(costoRealEdit) || 0,
           margen_ganancia: Number(margenEdit) || 0,
           stock_minimo: Number(stockMinimoEdit) || 0
@@ -266,39 +265,17 @@ export function DetalleProducto({ productoId, onBack, onProductUpdated, onProduc
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <div className="form-group">
-                    <label className="form-label">Precio compra neto ($)</label>
-                    <input
-                      type="number"
-                      step="any"
-                      className="form-input"
-                      value={precioCompraEdit}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setPrecioCompraEdit(val);
-                        const num = Number(val);
-                        if (!isNaN(num) && num > 0) {
-                          setCostoRealEdit(String(Math.round(num * 1.21 * 100) / 100));
-                        } else {
-                          setCostoRealEdit(val);
-                        }
-                      }}
-                    />
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Sin IVA</span>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Costo real (+21% IVA) ($)</label>
-                    <input
-                      type="number"
-                      step="any"
-                      className="form-input"
-                      value={costoRealEdit}
-                      onChange={(e) => setCostoRealEdit(e.target.value)}
-                      required
-                    />
-                    <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 600 }}>Incluye 21% IVA</span>
-                  </div>
+                <div className="form-group">
+                  <label className="form-label">Costo real (+21% IVA) ($)</label>
+                  <input
+                    type="number"
+                    step="any"
+                    className="form-input"
+                    value={costoRealEdit}
+                    onChange={(e) => setCostoRealEdit(e.target.value)}
+                    required
+                  />
+                  <span style={{ fontSize: '0.74rem', color: '#10b981', fontWeight: 600 }}>Costo final pagado con IVA incluido</span>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -344,16 +321,16 @@ export function DetalleProducto({ productoId, onBack, onProductUpdated, onProduc
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.88rem' }}>
               <div>
-                <span style={{ color: 'var(--text-muted)' }}>Precio compra (Neto):</span>
-                <div style={{ fontWeight: 700, marginTop: '2px' }}>{formatCurrency(producto.precio_compra)}</div>
-              </div>
-              <div>
                 <span style={{ color: 'var(--text-muted)' }}>Costo real (+21% IVA):</span>
                 <div style={{ fontWeight: 700, marginTop: '2px', color: '#10b981' }}>{formatCurrency(producto.costo_real)}</div>
               </div>
               <div>
                 <span style={{ color: 'var(--text-muted)' }}>Margen de ganancia:</span>
                 <div style={{ fontWeight: 700, marginTop: '2px', color: 'var(--primary)' }}>{producto.margen_ganancia}%</div>
+              </div>
+              <div>
+                <span style={{ color: 'var(--text-muted)' }}>Precio de góndola:</span>
+                <div style={{ fontWeight: 700, marginTop: '2px', color: '#60a5fa' }}>{formatCurrency(producto.precio_gondola)}</div>
               </div>
               <div>
                 <span style={{ color: 'var(--text-muted)' }}>Unidad de venta:</span>

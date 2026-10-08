@@ -128,13 +128,8 @@ export async function crearProducto(req, res, next) {
       });
     }
 
-    const numPrecioCompra = Number(precio_compra) || 0;
-    let finalCostoReal = Number(costo_real);
-
-    // Si no se proporcionó costo_real o es 0 y hay precio de compra, aplicar automáticamente el 21% de IVA
-    if ((isNaN(finalCostoReal) || finalCostoReal === 0) && numPrecioCompra > 0) {
-      finalCostoReal = calcularCostoRealConIva(numPrecioCompra);
-    }
+    const finalCostoReal = Number(costo_real);
+    const numPrecioCompra = precio_compra !== undefined ? (Number(precio_compra) || 0) : finalCostoReal;
 
     const validacion = validarDatosPrecio(finalCostoReal, margen_ganancia, numPrecioCompra);
     if (!validacion.valido) {
@@ -233,11 +228,8 @@ export async function actualizarProducto(req, res, next) {
     const nuevoNombre = nombre ? nombre.trim() : anterior.nombre;
     const nuevaCategoria = categoria_id !== undefined ? (categoria_id ? Number(categoria_id) : null) : anterior.categoria_id;
     const nuevaUnidad = unidad_venta || anterior.unidad_venta;
-    let nuevoCostoReal = costo_real !== undefined ? Number(costo_real) : Number(anterior.costo_real);
-    // Si se actualizó el precio de compra y no se envió un costo real específico, recalcular costo real con 21% IVA
-    if (precio_compra !== undefined && (costo_real === undefined || Number(costo_real) === 0) && nuevoPrecioCompra > 0) {
-      nuevoCostoReal = calcularCostoRealConIva(nuevoPrecioCompra);
-    }
+    const nuevoCostoReal = costo_real !== undefined ? Number(costo_real) : Number(anterior.costo_real);
+    const nuevoPrecioCompra = precio_compra !== undefined ? Number(precio_compra) : nuevoCostoReal;
     const nuevoMargen = margen_ganancia !== undefined ? Number(margen_ganancia) : Number(anterior.margen_ganancia);
     const nuevoStockMin = stock_minimo !== undefined ? Number(stock_minimo) : Number(anterior.stock_minimo);
 

@@ -38,13 +38,13 @@ export function calcularCostoRealConIva(precioCompra) {
   return Math.round(compra * 1.21 * 100) / 100;
 }
 
-export function validarDatosPrecio(costoReal, margenGanancia, precioCompra) {
+export function validarDatosPrecio(costoReal, margenGanancia, precioCompra = 0) {
   const errors = [];
   const costo = Number(costoReal);
   const margen = Number(margenGanancia);
   const compra = Number(precioCompra);
 
-  if (isNaN(compra) || compra < 0) {
+  if (!isNaN(compra) && compra < 0) {
     errors.push('El precio de compra no puede ser negativo.');
   }
 

@@ -8,7 +8,6 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
   const [nombre, setNombre] = useState('');
   const [categoriaId, setCategoriaId] = useState('');
   const [unidadVenta, setUnidadVenta] = useState('Unidad');
-  const [precioCompra, setPrecioCompra] = useState('');
   const [costoReal, setCostoReal] = useState('');
   const [margenGanancia, setMargenGanancia] = useState('40');
   const [stockInicial, setStockInicial] = useState('');
@@ -46,27 +45,13 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
     }
   };
 
-  // Sincronizar costo real cuando cambia precio de compra aplicando automáticamente 21% de IVA
-  const handlePrecioCompraChange = (val) => {
-    setPrecioCompra(val);
-    const num = Number(val);
-    if (!isNaN(num) && num > 0) {
-      const costoConIva = Math.round(num * 1.21 * 100) / 100;
-      setCostoReal(String(costoConIva));
-    } else {
-      setCostoReal(val);
-    }
-  };
-
-  // Aplicar cálculo de fraccionado (ej. $4000 / 400g = $10/g + 21% IVA)
+  // Aplicar cálculo de fraccionado (ej. $4000 / 400g = $10/g)
   const aplicarFraccionado = () => {
     const pPrecio = Number(paquetePrecio);
     const pContenido = Number(paqueteContenido);
     if (pPrecio > 0 && pContenido > 0) {
       const costoUnitario = Math.round((pPrecio / pContenido) * 100) / 100;
-      const costoConIva = Math.round(costoUnitario * 1.21 * 100) / 100;
-      setPrecioCompra(String(costoUnitario));
-      setCostoReal(String(costoConIva));
+      setCostoReal(String(costoUnitario));
       setStockInicial(String(pContenido));
       setMostrarCalculadorFraccionado(false);
     }
@@ -105,7 +90,7 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
           nombre: nombre.trim(),
           categoria_id: categoriaId ? Number(categoriaId) : null,
           unidad_venta: unidadVenta,
-          precio_compra: Number(precioCompra) || 0,
+          precio_compra: cReal,
           costo_real: cReal,
           margen_ganancia: margen,
           stock_inicial: Number(stockInicial) || 0,
@@ -332,35 +317,19 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
               3. Costos y Margen de Ganancia
             </h3>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <div className="form-group">
-                <label className="form-label">Precio compra neto ($)</label>
-                <input
-                  type="number"
-                  step="any"
-                  min="0"
-                  className="form-input"
-                  placeholder="0.00"
-                  value={precioCompra}
-                  onChange={(e) => handlePrecioCompraChange(e.target.value)}
-                />
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Sin IVA</span>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Costo real (+21% IVA) ($) *</label>
-                <input
-                  type="number"
-                  step="any"
-                  min="0"
-                  className="form-input"
-                  placeholder="0.00"
-                  value={costoReal}
-                  onChange={(e) => setCostoReal(e.target.value)}
-                  required
-                />
-                <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 600 }}>Incluye 21% IVA</span>
-              </div>
+            <div className="form-group">
+              <label className="form-label">Costo real (+21% IVA) ($) *</label>
+              <input
+                type="number"
+                step="any"
+                min="0"
+                className="form-input"
+                placeholder="0.00"
+                value={costoReal}
+                onChange={(e) => setCostoReal(e.target.value)}
+                required
+              />
+              <span style={{ fontSize: '0.74rem', color: '#10b981', fontWeight: 600 }}>Costo final pagado con IVA incluido</span>
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
