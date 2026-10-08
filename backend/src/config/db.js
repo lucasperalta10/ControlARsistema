@@ -146,6 +146,20 @@ async function setupSqliteTables() {
     )
   `);
 
+  await runSqlite(`
+    CREATE TABLE IF NOT EXISTS configuracion (
+      clave TEXT PRIMARY KEY,
+      valor TEXT NOT NULL,
+      descripcion TEXT NULL,
+      actualizado_en DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await runSqlite(`
+    INSERT OR IGNORE INTO configuracion (clave, valor, descripcion)
+    VALUES ('margen_predeterminado', '50.00', 'Porcentaje predeterminado inicial para productos nuevos')
+  `);
+
   // Seeds
   const defaultPinHash = bcrypt.hashSync('1234', 10);
 
@@ -265,6 +279,23 @@ export async function connectDB() {
       await conn.query('ALTER TABLE usuarios ADD COLUMN puede_gestionar_categorias BOOLEAN NOT NULL DEFAULT FALSE');
     } catch (migErr) {
       // Ignorar si la columna ya existe
+    }
+
+    try {
+      await conn.query(`
+        CREATE TABLE IF NOT EXISTS configuracion (
+          clave VARCHAR(50) PRIMARY KEY,
+          valor TEXT NOT NULL,
+          descripcion VARCHAR(255) NULL,
+          actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+      `);
+      await conn.query(`
+        INSERT IGNORE INTO configuracion (clave, valor, descripcion)
+        VALUES ('margen_predeterminado', '50.00', 'Porcentaje predeterminado inicial para productos nuevos')
+      `);
+    } catch (confErr) {
+      // Ignorar si ya existe
     }
     conn.release();
     mode = 'mysql';

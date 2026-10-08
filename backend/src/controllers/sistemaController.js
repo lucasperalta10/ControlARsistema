@@ -1,4 +1,5 @@
 import { query, getDbMode } from '../config/db.js';
+import { getMargenPredeterminado, setMargenPredeterminado } from '../services/configuracionService.js';
 
 export async function getEstado(req, res, next) {
   try {
@@ -38,6 +39,54 @@ export async function getEstado(req, res, next) {
   }
 }
 
+/**
+ * Obtener la configuración general del sistema (ej: margen predeterminado)
+ */
+export async function getConfiguracion(req, res, next) {
+  try {
+    const margenPredeterminado = await getMargenPredeterminado();
+    res.json({
+      success: true,
+      configuracion: {
+        margen_predeterminado: margenPredeterminado
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Actualizar el margen predeterminado para futuras cargas de productos
+ */
+export async function updateMargenPredeterminado(req, res, next) {
+  try {
+    const { margen_predeterminado } = req.body;
+
+    if (margen_predeterminado === undefined || margen_predeterminado === null || margen_predeterminado === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Debés ingresar un porcentaje de margen válido.'
+      });
+    }
+
+    const nuevoMargen = await setMargenPredeterminado(margen_predeterminado, req.usuario?.id);
+
+    res.json({
+      success: true,
+      message: `Porcentaje predeterminado actualizado al ${nuevoMargen}%. Solo se aplicará a productos nuevos.`,
+      configuracion: {
+        margen_predeterminado: nuevoMargen
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export default {
-  getEstado
+  getEstado,
+  getConfiguracion,
+  updateMargenPredeterminado
 };
+

@@ -109,3 +109,16 @@ INSERT IGNORE INTO usuarios (id, dni, nombre, apellido, pin_hash, rol, activo) V
 -- Usuario estándar inicial (DNI: 12345678, PIN: 1234)
 INSERT IGNORE INTO usuarios (id, dni, nombre, apellido, pin_hash, rol, activo) VALUES
 (2, '12345678', 'María', 'Victoria', '$2a$10$3YcAf6yyjHtxVCpXVUIrfuBjio.9G7ulT60hVPcesVS1EJtoywGBu', 'USUARIO', 1);
+
+-- 6. Tabla: configuracion
+CREATE TABLE IF NOT EXISTS configuracion (
+  clave VARCHAR(50) PRIMARY KEY,
+  valor TEXT NOT NULL,
+  descripcion VARCHAR(255) NULL,
+  actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Margen predeterminado inicial: 50.00%
+INSERT IGNORE INTO configuracion (clave, valor, descripcion) VALUES
+('margen_predeterminado', '50.00', 'Porcentaje predeterminado inicial para productos nuevos');
+

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client.js';
 import { calculateGondolaPreview, formatCurrency } from '../utils/formatters.js';
-import { Calculator, Check, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Calculator, Check, ArrowLeft, AlertCircle, Sliders } from 'lucide-react';
 
 export function AgregarProducto({ onProductCreated, onCancel }) {
   const [categorias, setCategorias] = useState([]);
@@ -9,10 +9,17 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
   const [categoriaId, setCategoriaId] = useState('');
   const [unidadVenta, setUnidadVenta] = useState('Unidad');
   const [costoReal, setCostoReal] = useState('');
-  const [margenGanancia, setMargenGanancia] = useState('40');
+  const [margenGanancia, setMargenGanancia] = useState('50');
+  const [margenPredeterminadoSistema, setMargenPredeterminadoSistema] = useState(50);
   const [stockInicial, setStockInicial] = useState('');
   const [stockMinimo, setStockMinimo] = useState('');
   
+  // Modal para modificar el porcentaje predeterminado del negocio
+  const [mostrarModalConfigMargen, setMostrarModalConfigMargen] = useState(false);
+  const [nuevoMargenConfig, setNuevoMargenConfig] = useState('50');
+  const [guardandoConfig, setGuardandoConfig] = useState(false);
+  const [mensajeConfig, setMensajeConfig] = useState(null);
+
   // Calculadora auxiliar de producto fraccionado (opcional para el usuario)
   const [mostrarCalculadorFraccionado, setMostrarCalculadorFraccionado] = useState(false);
   const [paqueteContenido, setPaqueteContenido] = useState('');
@@ -22,15 +29,24 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchCategorias = async () => {
+    const fetchData = async () => {
       try {
-        const res = await apiRequest('/categorias');
-        if (res.success) setCategorias(res.categorias);
+        const [catRes, confRes] = await Promise.all([
+          apiRequest('/categorias'),
+          apiRequest('/sistema/configuracion')
+        ]);
+        if (catRes.success) setCategorias(catRes.categorias);
+        if (confRes.success && confRes.configuracion?.margen_predeterminado !== undefined) {
+          const mPred = Number(confRes.configuracion.margen_predeterminado);
+          setMargenPredeterminadoSistema(mPred);
+          setMargenGanancia(String(mPred));
+          setNuevoMargenConfig(String(mPred));
+        }
       } catch (e) {
-        console.error('Error cargando categorias:', e);
+        console.error('Error cargando datos iniciales:', e);
       }
     };
-    fetchCategorias();
+    fetchData();
   }, []);
 
   // Al seleccionar categoría, sugerir margen si la categoría tiene predeterminado
@@ -42,6 +58,39 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
       if (cat && cat.margen_predeterminado !== null) {
         setMargenGanancia(String(cat.margen_predeterminado));
       }
+    } else {
+      setMargenGanancia(String(margenPredeterminadoSistema));
+    }
+  };
+
+  const handleGuardarNuevoMargenPredeterminado = async (e) => {
+    e.preventDefault();
+    const val = Number(nuevoMargenConfig);
+    if (isNaN(val) || val < 0 || val >= 100) {
+      alert('El porcentaje debe estar entre 0% y 99.99%.');
+      return;
+    }
+
+    setGuardandoConfig(true);
+    setMensajeConfig(null);
+    try {
+      const res = await apiRequest('/sistema/configuracion/margen-predeterminado', {
+        method: 'PUT',
+        body: { margen_predeterminado: val }
+      });
+      if (res.success) {
+        setMargenPredeterminadoSistema(res.configuracion.margen_predeterminado);
+        setMargenGanancia(String(res.configuracion.margen_predeterminado));
+        setMensajeConfig(res.message);
+        setTimeout(() => {
+          setMostrarModalConfigMargen(false);
+          setMensajeConfig(null);
+        }, 1500);
+      }
+    } catch (err) {
+      alert(err.message || 'Error al guardar la configuración.');
+    } finally {
+      setGuardandoConfig(false);
     }
   };
 
@@ -333,7 +382,34 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Margen de ganancia (%): {margenGanancia}%</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label className="form-label" style={{ margin: 0 }}>
+                  Margen de ganancia: <strong style={{ color: 'var(--primary)' }}>{margenGanancia}%</strong>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNuevoMargenConfig(String(margenPredeterminadoSistema));
+                    setMostrarModalConfigMargen(true);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#60a5fa',
+                    fontSize: '0.74rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: 0,
+                    textDecoration: 'underline'
+                  }}
+                  title="Configurar porcentaje predeterminado para futuras cargas"
+                >
+                  <Sliders size={13} /> Predet: {margenPredeterminadoSistema}%
+                </button>
+              </div>
+
               <input
                 type="number"
                 step="0.5"
@@ -380,8 +456,87 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
           </button>
         </div>
       </form>
+
+      {/* Modal para configurar porcentaje predeterminado para futuras cargas */}
+      {mostrarModalConfigMargen && (
+        <div className="modal-overlay" onClick={() => setMostrarModalConfigMargen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <Sliders size={20} color="var(--primary)" />
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>
+                Porcentaje Predeterminado
+              </h3>
+            </div>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
+              Este porcentaje se utilizará automáticamente en los <strong>productos nuevos</strong> que crees en futuras cargas.
+            </p>
+
+            <div style={{
+              background: 'rgba(59, 130, 246, 0.1)',
+              border: '1px solid rgba(59, 130, 246, 0.25)',
+              borderRadius: 'var(--radius-md)',
+              padding: '10px 12px',
+              fontSize: '0.78rem',
+              color: '#93c5fd',
+              marginBottom: '16px'
+            }}>
+              🛡️ <strong>Regla del negocio:</strong> Los productos existentes no sufrirán ninguna modificación ni se recalcularán sus precios. Cada producto conserva su porcentaje original.
+            </div>
+
+            {mensajeConfig && (
+              <div style={{
+                background: 'var(--success-bg)',
+                color: 'var(--success)',
+                padding: '10px',
+                borderRadius: 'var(--radius-md)',
+                marginBottom: '12px',
+                fontSize: '0.85rem'
+              }}>
+                {mensajeConfig}
+              </div>
+            )}
+
+            <form onSubmit={handleGuardarNuevoMargenPredeterminado}>
+              <div className="form-group">
+                <label className="form-label">Nuevo porcentaje predeterminado (%)</label>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  max="99.9"
+                  className="form-input"
+                  value={nuevoMargenConfig}
+                  onChange={(e) => setNuevoMargenConfig(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setMostrarModalConfigMargen(false)}
+                  style={{ flex: 1 }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={guardandoConfig}
+                  style={{ flex: 1 }}
+                >
+                  {guardandoConfig ? 'Guardando...' : 'Guardar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 export default AgregarProducto;
+

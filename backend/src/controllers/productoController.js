@@ -1,6 +1,7 @@
 import { query } from '../config/db.js';
 import { calcularPrecioGondola, validarDatosPrecio, calcularCostoRealConIva } from '../services/precioService.js';
 import { registrarActividad } from '../services/actividadService.js';
+import { getMargenPredeterminado } from '../services/configuracionService.js';
 
 function calcularEstadoStock(stockActual, stockMinimo) {
   const stock = Number(stockActual);
@@ -131,7 +132,11 @@ export async function crearProducto(req, res, next) {
     const finalCostoReal = Number(costo_real);
     const numPrecioCompra = precio_compra !== undefined ? (Number(precio_compra) || 0) : finalCostoReal;
 
-    const validacion = validarDatosPrecio(finalCostoReal, margen_ganancia, numPrecioCompra);
+    let finalMargen = margen_ganancia !== undefined && margen_ganancia !== null && margen_ganancia !== ''
+      ? Number(margen_ganancia)
+      : await getMargenPredeterminado();
+
+    const validacion = validarDatosPrecio(finalCostoReal, finalMargen, numPrecioCompra);
     if (!validacion.valido) {
       return res.status(400).json({ success: false, message: validacion.errores.join(' ') });
     }
@@ -144,7 +149,7 @@ export async function crearProducto(req, res, next) {
     }
 
     // Backend es la fuente de verdad del precio
-    const precioGondola = calcularPrecioGondola(finalCostoReal, margen_ganancia);
+    const precioGondola = calcularPrecioGondola(finalCostoReal, finalMargen);
 
     const insertSql = `
       INSERT INTO productos (
@@ -159,7 +164,7 @@ export async function crearProducto(req, res, next) {
       unidad_venta,
       numPrecioCompra,
       finalCostoReal,
-      Number(margen_ganancia),
+      finalMargen,
       precioGondola,
       stockIni,
       stockMin

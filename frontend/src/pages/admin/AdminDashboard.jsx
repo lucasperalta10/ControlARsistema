@@ -13,7 +13,8 @@ import {
   KeyRound,
   Trash2,
   AlertCircle,
-  Shield
+  Shield,
+  Sliders
 } from 'lucide-react';
 
 export function AdminDashboard({ onBack }) {
@@ -60,6 +61,10 @@ export function AdminDashboard({ onBack }) {
   const [categoriaDestinoId, setCategoriaDestinoId] = useState('');
   const [loadingEliminar, setLoadingEliminar] = useState(false);
 
+  // Configuración comercial
+  const [margenPredeterminadoAdmin, setMargenPredeterminadoAdmin] = useState('50');
+  const [guardandoMargenAdmin, setGuardandoMargenAdmin] = useState(false);
+
   const loadData = async () => {
     setLoading(true);
     setError(null);
@@ -74,8 +79,14 @@ export function AdminDashboard({ onBack }) {
         const res = await apiRequest('/actividad?limit=50');
         if (res.success) setActividades(res.actividad);
       } else if (seccion === 'sistema') {
-        const res = await apiRequest('/sistema/estado');
-        if (res.success) setSistema(res);
+        const [estadoRes, confRes] = await Promise.all([
+          apiRequest('/sistema/estado'),
+          apiRequest('/sistema/configuracion')
+        ]);
+        if (estadoRes.success) setSistema(estadoRes);
+        if (confRes.success && confRes.configuracion?.margen_predeterminado !== undefined) {
+          setMargenPredeterminadoAdmin(String(confRes.configuracion.margen_predeterminado));
+        }
       }
     } catch (err) {
       setError(err.message || 'Error cargando datos de administración.');
@@ -462,36 +473,112 @@ export function AdminDashboard({ onBack }) {
           )}
 
           {/* SECCIÓN ESTADO DEL SISTEMA */}
-          {seccion === 'sistema' && isSuperAdmin && sistema && (
+          {seccion === 'sistema' && isSuperAdmin && (
             <div>
               <h2 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', marginBottom: '12px' }}>
-                Estado Operativo del Sistema
+                Sistema y Configuración
               </h2>
 
-              <div className="card">
-                <h3 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '8px' }}>
-                  Base de Datos
-                </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.82rem' }}>
-                  <div>Estado: <strong style={{ color: 'var(--success)' }}>{sistema.baseDeDatos?.estado}</strong></div>
-                  <div>Motor: <strong>{sistema.baseDeDatos?.modo}</strong></div>
-                  <div>Latencia: <strong>{sistema.baseDeDatos?.latenciaMs} ms</strong></div>
-                  <div>Productos: <strong>{sistema.baseDeDatos?.conteos?.productosActivos}</strong></div>
-                  <div>Movimientos: <strong>{sistema.baseDeDatos?.conteos?.totalMovimientosStock}</strong></div>
-                  <div>Usuarios: <strong>{sistema.baseDeDatos?.conteos?.usuariosActivos}</strong></div>
+              {/* Tarjeta Configuración Comercial */}
+              <div className="card" style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <Sliders size={18} color="var(--primary)" />
+                  <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>
+                    Configuración Comercial del Negocio
+                  </h3>
                 </div>
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
+                  Porcentaje de recargo predeterminado vigente para calcular el precio de góndola en productos nuevos.
+                </p>
+
+                <div style={{
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  border: '1px solid rgba(59, 130, 246, 0.25)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '10px 12px',
+                  fontSize: '0.76rem',
+                  color: '#93c5fd',
+                  marginBottom: '14px'
+                }}>
+                  🛡️ <strong>Regla del negocio:</strong> Modificar este valor solo impacta en productos nuevos. Los productos existentes no se alteran ni recalculan.
+                </div>
+
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  const val = Number(margenPredeterminadoAdmin);
+                  if (isNaN(val) || val < 0 || val >= 100) {
+                    setError('El porcentaje de margen debe estar entre 0% y 99.99%.');
+                    return;
+                  }
+                  setGuardandoMargenAdmin(true);
+                  setError(null);
+                  try {
+                    const res = await apiRequest('/sistema/configuracion/margen-predeterminado', {
+                      method: 'PUT',
+                      body: { margen_predeterminado: val }
+                    });
+                    if (res.success) {
+                      setMensajeExito(res.message);
+                      setMargenPredeterminadoAdmin(String(res.configuracion.margen_predeterminado));
+                    }
+                  } catch (err) {
+                    setError(err.message || 'Error al guardar la configuración comercial.');
+                  } finally {
+                    setGuardandoMargenAdmin(false);
+                  }
+                }} style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
+                  <div className="form-group" style={{ margin: 0, flex: 1 }}>
+                    <label className="form-label">Porcentaje predeterminado (%)</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0"
+                      max="99.9"
+                      className="form-input"
+                      value={margenPredeterminadoAdmin}
+                      onChange={(e) => setMargenPredeterminadoAdmin(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={guardandoMargenAdmin}
+                    style={{ padding: '9px 16px', fontSize: '0.82rem' }}
+                  >
+                    {guardandoMargenAdmin ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </form>
               </div>
 
-              <div className="card">
-                <h3 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '8px' }}>
-                  Servidor API
-                </h3>
-                <div style={{ fontSize: '0.82rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <div>Versión: <strong>{sistema.sistema?.version}</strong></div>
-                  <div>Entorno: <strong>{sistema.sistema?.entorno}</strong></div>
-                  <div>Uptime: <strong>{Math.floor((sistema.sistema?.uptimeSegundos || 0) / 60)} minutos</strong></div>
-                </div>
-              </div>
+              {sistema && (
+                <>
+                  <div className="card">
+                    <h3 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '8px' }}>
+                      Base de Datos
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.82rem' }}>
+                      <div>Estado: <strong style={{ color: 'var(--success)' }}>{sistema.baseDeDatos?.estado}</strong></div>
+                      <div>Motor: <strong>{sistema.baseDeDatos?.modo}</strong></div>
+                      <div>Latencia: <strong>{sistema.baseDeDatos?.latenciaMs} ms</strong></div>
+                      <div>Productos: <strong>{sistema.baseDeDatos?.conteos?.productosActivos}</strong></div>
+                      <div>Movimientos: <strong>{sistema.baseDeDatos?.conteos?.totalMovimientosStock}</strong></div>
+                      <div>Usuarios: <strong>{sistema.baseDeDatos?.conteos?.usuariosActivos}</strong></div>
+                    </div>
+                  </div>
+
+                  <div className="card">
+                    <h3 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '8px' }}>
+                      Servidor API
+                    </h3>
+                    <div style={{ fontSize: '0.82rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div>Versión: <strong>{sistema.sistema?.version}</strong></div>
+                      <div>Entorno: <strong>{sistema.sistema?.entorno}</strong></div>
+                      <div>Uptime: <strong>{Math.floor((sistema.sistema?.uptimeSegundos || 0) / 60)} minutos</strong></div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </>
