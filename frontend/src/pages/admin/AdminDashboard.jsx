@@ -488,7 +488,7 @@ export function AdminDashboard({ onBack }) {
                   </h3>
                 </div>
                 <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
-                  Porcentaje de recargo predeterminado vigente para calcular el precio de góndola en productos nuevos.
+                  Porcentaje de recargo predeterminado vigente para calcular el precio de mostrador en productos nuevos.
                 </p>
 
                 <div style={{
@@ -506,8 +506,8 @@ export function AdminDashboard({ onBack }) {
                 <form onSubmit={async (e) => {
                   e.preventDefault();
                   const val = Number(margenPredeterminadoAdmin);
-                  if (isNaN(val) || val < 0 || val >= 100) {
-                    setError('El porcentaje de margen debe estar entre 0% y 99.99%.');
+                  if (isNaN(val) || val < 0) {
+                    setError('El porcentaje de recargo debe ser mayor o igual a 0%.');
                     return;
                   }
                   setGuardandoMargenAdmin(true);
@@ -533,7 +533,7 @@ export function AdminDashboard({ onBack }) {
                       type="number"
                       step="0.5"
                       min="0"
-                      max="99.9"
+                      max="999.9"
                       className="form-input"
                       value={margenPredeterminadoAdmin}
                       onChange={(e) => setMargenPredeterminadoAdmin(e.target.value)}

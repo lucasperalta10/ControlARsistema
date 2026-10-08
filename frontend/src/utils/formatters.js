@@ -46,16 +46,19 @@ export function formatDate(dateString) {
 }
 
 /**
- * Cálculo del precio de góndola para preview en frontend:
- * Precio = Costo real / (1 - Margen/100)
+ * Cálculo del precio de mostrador para preview en frontend:
+ * Precio de mostrador = Precio de compra (costo con IVA) × (1 + Porcentaje de ganancia / 100)
  */
-export function calculateGondolaPreview(costoReal, margenGanancia) {
+export function calculateMostradorPreview(costoReal, margenGanancia) {
   const costo = Number(costoReal);
   const margen = Number(margenGanancia);
 
   if (isNaN(costo) || costo <= 0) return 0;
-  if (isNaN(margen) || margen < 0 || margen >= 100) return 0;
+  if (isNaN(margen) || margen < 0) return 0;
 
-  const precio = costo / (1 - (margen / 100));
+  const precio = costo * (1 + (margen / 100));
   return Math.round(precio * 100) / 100;
 }
+
+// Alias de retrocompatibilidad
+export const calculateGondolaPreview = calculateMostradorPreview;

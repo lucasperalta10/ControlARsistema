@@ -12,13 +12,15 @@ El sistema cumple rigurosamente con la especificación técnica y funcional defi
 
 ---
 
-## 📐 Regla oficial de cálculo de precios
+## 📐 Regla oficial de cálculo de precios (Precio de Mostrador)
 
-$$\text{Precio de góndola} = \frac{\text{Costo real}}{1 - \text{Margen}}$$
+$$\text{Precio de mostrador} = \text{Precio de compra (con IVA)} \times \left(1 + \frac{\text{Porcentaje de ganancia o recargo}}{100}\right)$$
 
-* Cada producto posee su propio margen de ganancia independiente ($0\% \le \text{margen} < 100\%$).
-* El backend es la única fuente de verdad; calcula y valida el precio.
-* El frontend provee cálculo en tiempo real proyectado y asistente de costo unitario para productos fraccionados (ej: paquetes de gramos).
+* El porcentaje representa un recargo directo sobre el costo con IVA incluido, adaptado a la modalidad operativa de Victoria Productos Artesanales.
+* Valor predeterminado comercial inicial del 50% para productos nuevos (configurable por la usuaria).
+* Cada producto conserva de forma persistente su propio porcentaje de recargo y precio una vez guardado.
+* El backend es la única fuente de verdad; valida que el precio de compra y el porcentaje no sean negativos.
+* El frontend provee cálculo proyectado en tiempo real y asistente de costo unitario para fraccionados.
 
 ---
 

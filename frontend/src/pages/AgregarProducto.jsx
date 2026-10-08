@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client.js';
-import { calculateGondolaPreview, formatCurrency } from '../utils/formatters.js';
+import { calculateMostradorPreview, formatCurrency } from '../utils/formatters.js';
 import { Calculator, Check, ArrowLeft, AlertCircle, Sliders } from 'lucide-react';
 
 export function AgregarProducto({ onProductCreated, onCancel }) {
@@ -66,8 +66,8 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
   const handleGuardarNuevoMargenPredeterminado = async (e) => {
     e.preventDefault();
     const val = Number(nuevoMargenConfig);
-    if (isNaN(val) || val < 0 || val >= 100) {
-      alert('El porcentaje debe estar entre 0% y 99.99%.');
+    if (isNaN(val) || val < 0) {
+      alert('El porcentaje debe ser mayor o igual a 0%.');
       return;
     }
 
@@ -106,8 +106,8 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
     }
   };
 
-  // Cálculo en vivo del precio de góndola
-  const precioGondolaPreview = calculateGondolaPreview(costoReal, margenGanancia);
+  // Cálculo en vivo del precio de mostrador proyectado
+  const precioMostradorPreview = calculateMostradorPreview(costoReal, margenGanancia);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -122,12 +122,12 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
     const margen = Number(margenGanancia);
 
     if (isNaN(cReal) || cReal < 0) {
-      setError('El costo real debe ser mayor o igual a 0.');
+      setError('El precio de compra no puede ser negativo.');
       return;
     }
 
-    if (isNaN(margen) || margen < 0 || margen >= 100) {
-      setError('El margen de ganancia debe estar entre 0% y 99.99%.');
+    if (isNaN(margen) || margen < 0) {
+      setError('El porcentaje de ganancia o recargo debe ser mayor o igual a 0%.');
       return;
     }
 
@@ -339,9 +339,9 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
           </div>
         </div>
 
-        {/* Columna Derecha: Tarjeta de Góndola, Costos y Guardado */}
+        {/* Columna Derecha: Tarjeta de Mostrador, Costos y Guardado */}
         <div>
-          {/* Tarjeta Destacada de Precio de Góndola Proyectado */}
+          {/* Tarjeta Destacada de Precio de Mostrador Proyectado */}
           <div className="card" style={{
             background: 'linear-gradient(135deg, #131d33 0%, #1e293b 100%)',
             border: '1.5px solid rgba(59, 130, 246, 0.4)',
@@ -350,24 +350,24 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
             marginBottom: '16px'
           }}>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 700 }}>
-              Precio de góndola proyectado
+              Precio de mostrador proyectado
             </div>
             <div style={{ fontSize: '2.4rem', fontWeight: 900, color: 'var(--primary)', margin: '6px 0' }}>
-              {formatCurrency(precioGondolaPreview)}
+              {formatCurrency(precioMostradorPreview)}
             </div>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              Fórmula oficial: Costo / (1 - Margen%)
+              Fórmula: Compra × (1 + % / 100)
             </div>
           </div>
 
           {/* Sección Costos y Margen */}
           <div className="card">
             <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '12px', textTransform: 'uppercase' }}>
-              3. Costos y Margen de Ganancia
+              3. Costos y Recargo de Ganancia
             </h3>
 
             <div className="form-group">
-              <label className="form-label">Costo real (+21% IVA) ($) *</label>
+              <label className="form-label">Precio de compra (costo con IVA) ($) *</label>
               <input
                 type="number"
                 step="any"
@@ -378,13 +378,13 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
                 onChange={(e) => setCostoReal(e.target.value)}
                 required
               />
-              <span style={{ fontSize: '0.74rem', color: '#10b981', fontWeight: 600 }}>Costo final pagado con IVA incluido</span>
+              <span style={{ fontSize: '0.74rem', color: '#10b981', fontWeight: 600 }}>Costo final del producto con IVA incluido</span>
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                 <label className="form-label" style={{ margin: 0 }}>
-                  Margen de ganancia: <strong style={{ color: 'var(--primary)' }}>{margenGanancia}%</strong>
+                  Porcentaje de recargo: <strong style={{ color: 'var(--primary)' }}>{margenGanancia}%</strong>
                 </label>
                 <button
                   type="button"
@@ -414,7 +414,7 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
                 type="number"
                 step="0.5"
                 min="0"
-                max="99.9"
+                max="999.9"
                 className="form-input"
                 placeholder="Ej: 50"
                 value={margenGanancia}
@@ -422,7 +422,7 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
                 required
               />
               <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
-                {[35, 40, 50, 60].map((m) => (
+                {[30, 40, 50, 60].map((m) => (
                   <button
                     key={m}
                     type="button"
@@ -503,7 +503,7 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
                   type="number"
                   step="0.5"
                   min="0"
-                  max="99.9"
+                  max="999.9"
                   className="form-input"
                   value={nuevoMargenConfig}
                   onChange={(e) => setNuevoMargenConfig(e.target.value)}

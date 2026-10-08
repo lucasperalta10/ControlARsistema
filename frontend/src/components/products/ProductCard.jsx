@@ -37,7 +37,7 @@ export function ProductCard({ producto, onSelect, onQuickStock }) {
         </div>
 
         <div style={{ textAlign: 'right' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Góndola:</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Mostrador:</span>
           <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
             {formatCurrency(producto.precio_gondola)}
           </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client.js';
 import { StockBadge } from '../components/products/StockBadge.jsx';
 import { StockModal } from '../components/products/StockModal.jsx';
-import { formatCurrency, formatQuantity, formatDate } from '../utils/formatters.js';
+import { formatCurrency, formatQuantity, formatDate, calculateMostradorPreview } from '../utils/formatters.js';
 import {
   ArrowLeft,
   ArrowDownRight,
@@ -43,7 +43,6 @@ export function DetalleProducto({ productoId, onBack, onProductUpdated, onProduc
       if (prodRes.success) {
         setProducto(prodRes.producto);
         setNombreEdit(prodRes.producto.nombre);
-        setPrecioCompraEdit(String(prodRes.producto.precio_compra));
         setCostoRealEdit(String(prodRes.producto.costo_real));
         setMargenEdit(String(prodRes.producto.margen_ganancia));
         setStockMinimoEdit(String(prodRes.producto.stock_minimo));
@@ -211,12 +210,12 @@ export function DetalleProducto({ productoId, onBack, onProductUpdated, onProduc
               </div>
 
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Precio de góndola</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Precio de mostrador</div>
                 <div style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--primary)' }}>
                   {formatCurrency(producto.precio_gondola)}
                 </div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  Margen: {producto.margen_ganancia}%
+                  Recargo: {producto.margen_ganancia}%
                 </div>
               </div>
             </div>
@@ -266,10 +265,11 @@ export function DetalleProducto({ productoId, onBack, onProductUpdated, onProduc
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Costo real (+21% IVA) ($)</label>
+                  <label className="form-label">Precio de compra (costo con IVA) ($)</label>
                   <input
                     type="number"
                     step="any"
+                    min="0"
                     className="form-input"
                     value={costoRealEdit}
                     onChange={(e) => setCostoRealEdit(e.target.value)}
@@ -280,10 +280,11 @@ export function DetalleProducto({ productoId, onBack, onProductUpdated, onProduc
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <div className="form-group">
-                    <label className="form-label">Margen (%)</label>
+                    <label className="form-label">Recargo (%)</label>
                     <input
                       type="number"
                       step="any"
+                      min="0"
                       className="form-input"
                       value={margenEdit}
                       onChange={(e) => setMargenEdit(e.target.value)}
@@ -295,12 +296,30 @@ export function DetalleProducto({ productoId, onBack, onProductUpdated, onProduc
                     <input
                       type="number"
                       step="any"
+                      min="0"
                       className="form-input"
                       value={stockMinimoEdit}
                       onChange={(e) => setStockMinimoEdit(e.target.value)}
                       required
                     />
                   </div>
+                </div>
+
+                {/* Previsualización del cálculo al editar */}
+                <div style={{
+                  background: 'var(--bg-main)',
+                  padding: '10px 14px',
+                  borderRadius: 'var(--radius-md)',
+                  marginBottom: '14px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  border: '1px solid var(--border-color)'
+                }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Nuevo precio mostrador proyectado:</span>
+                  <strong style={{ fontSize: '1.1rem', color: 'var(--primary)' }}>
+                    {formatCurrency(calculateMostradorPreview(costoRealEdit, margenEdit))}
+                  </strong>
                 </div>
 
                 <button
@@ -317,19 +336,19 @@ export function DetalleProducto({ productoId, onBack, onProductUpdated, onProduc
           {/* Ficha de Detalles Económicos */}
           <div className="card">
             <h2 style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '12px', textTransform: 'uppercase' }}>
-              Información de Costos
+              Información de Costos y Precios
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.88rem' }}>
               <div>
-                <span style={{ color: 'var(--text-muted)' }}>Costo real (+21% IVA):</span>
+                <span style={{ color: 'var(--text-muted)' }}>Precio de compra (con IVA):</span>
                 <div style={{ fontWeight: 700, marginTop: '2px', color: '#10b981' }}>{formatCurrency(producto.costo_real)}</div>
               </div>
               <div>
-                <span style={{ color: 'var(--text-muted)' }}>Margen de ganancia:</span>
+                <span style={{ color: 'var(--text-muted)' }}>Porcentaje de recargo:</span>
                 <div style={{ fontWeight: 700, marginTop: '2px', color: 'var(--primary)' }}>{producto.margen_ganancia}%</div>
               </div>
               <div>
-                <span style={{ color: 'var(--text-muted)' }}>Precio de góndola:</span>
+                <span style={{ color: 'var(--text-muted)' }}>Precio de mostrador:</span>
                 <div style={{ fontWeight: 700, marginTop: '2px', color: '#60a5fa' }}>{formatCurrency(producto.precio_gondola)}</div>
               </div>
               <div>

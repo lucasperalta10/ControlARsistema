@@ -47,10 +47,10 @@ export async function crearCategoria(req, res, next) {
 
     if (margen_predeterminado !== undefined && margen_predeterminado !== null && margen_predeterminado !== '') {
       margen = Number(margen_predeterminado);
-      if (isNaN(margen) || margen < 0 || margen >= 100) {
+      if (isNaN(margen) || margen < 0 || margen > 999.99) {
         return res.status(400).json({
           success: false,
-          message: 'El margen predeterminado debe estar entre 0% y 99.99% o ser nulo.'
+          message: 'El porcentaje predeterminado debe ser un número mayor o igual a 0% o ser nulo.'
         });
       }
     }
@@ -112,10 +112,10 @@ export async function actualizarCategoria(req, res, next) {
         nuevoMargen = null;
       } else {
         nuevoMargen = Number(margen_predeterminado);
-        if (isNaN(nuevoMargen) || nuevoMargen < 0 || nuevoMargen >= 100) {
+        if (isNaN(nuevoMargen) || nuevoMargen < 0 || nuevoMargen > 999.99) {
           return res.status(400).json({
             success: false,
-            message: 'El margen predeterminado debe estar entre 0% y 99.99% o ser nulo.'
+            message: 'El porcentaje predeterminado debe ser un número mayor o igual a 0% o ser nulo.'
           });
         }
       }

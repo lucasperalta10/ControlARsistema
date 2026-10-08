@@ -132,9 +132,19 @@ export async function crearProducto(req, res, next) {
     const finalCostoReal = Number(costo_real);
     const numPrecioCompra = precio_compra !== undefined ? (Number(precio_compra) || 0) : finalCostoReal;
 
-    let finalMargen = margen_ganancia !== undefined && margen_ganancia !== null && margen_ganancia !== ''
-      ? Number(margen_ganancia)
-      : await getMargenPredeterminado();
+    let finalMargen;
+    if (margen_ganancia !== undefined && margen_ganancia !== null && margen_ganancia !== '') {
+      finalMargen = Number(margen_ganancia);
+    } else if (categoria_id) {
+      const catRows = await query('SELECT margen_predeterminado FROM categorias WHERE id = ?', [Number(categoria_id)]);
+      if (catRows && catRows.length > 0 && catRows[0].margen_predeterminado !== null) {
+        finalMargen = Number(catRows[0].margen_predeterminado);
+      } else {
+        finalMargen = await getMargenPredeterminado();
+      }
+    } else {
+      finalMargen = await getMargenPredeterminado();
+    }
 
     const validacion = validarDatosPrecio(finalCostoReal, finalMargen, numPrecioCompra);
     if (!validacion.valido) {

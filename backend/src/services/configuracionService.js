@@ -12,7 +12,7 @@ export async function getMargenPredeterminado() {
     const rows = await query("SELECT valor FROM configuracion WHERE clave = 'margen_predeterminado'");
     if (rows && rows.length > 0 && rows[0].valor) {
       const val = Number(rows[0].valor);
-      if (!isNaN(val) && val >= 0 && val < 100) {
+      if (!isNaN(val) && val >= 0 && val <= 999.99) {
         return val;
       }
     }
@@ -30,8 +30,8 @@ export async function getMargenPredeterminado() {
  */
 export async function setMargenPredeterminado(nuevoMargen, usuarioId = null) {
   const margen = Number(nuevoMargen);
-  if (isNaN(margen) || margen < 0 || margen >= 100) {
-    throw new Error('El porcentaje predeterminado debe ser un número entre 0% y 99.99%.');
+  if (isNaN(margen) || margen < 0 || margen > 999.99) {
+    throw new Error('El porcentaje predeterminado debe ser un número válido mayor o igual a 0%.');
   }
 
   // Redondear a 2 decimales

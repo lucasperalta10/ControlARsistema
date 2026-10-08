@@ -1,36 +1,42 @@
 /**
  * Servicio de Cálculo de Precios para ControlAR v1.0
+ * Victoria Productos Artesanales
  * 
  * Regla oficial del negocio:
- *   Precio de góndola = Costo real (21% IVA incluido) / (1 - (Margen / 100))
+ *   Precio de mostrador = Precio de compra (costo con IVA) × (1 + Porcentaje de ganancia / 100)
+ * 
+ * El porcentaje representa un recargo sobre el costo, no un margen sobre el precio de venta.
  * 
  * Restricciones:
- *   - Margen >= 0 y Margen < 100
- *   - Costo real >= 0
+ *   - Precio de compra / Costo real >= 0
+ *   - Porcentaje de ganancia o recargo >= 0
  */
 
-export function calcularPrecioGondola(costoReal, margenGanancia) {
+export function calcularPrecioMostrador(costoReal, margenGanancia) {
   const costo = Number(costoReal);
-  const margen = Number(margenGanancia);
+  const porcentaje = Number(margenGanancia);
 
   if (isNaN(costo) || costo < 0) {
-    throw new Error('El costo real debe ser un número mayor o igual a 0.');
+    throw new Error('El precio de compra no puede ser negativo.');
   }
 
-  if (isNaN(margen) || margen < 0 || margen >= 100) {
-    throw new Error('El margen de ganancia debe ser mayor o igual a 0% y menor a 100%.');
+  if (isNaN(porcentaje) || porcentaje < 0) {
+    throw new Error('El porcentaje de ganancia o recargo debe ser mayor o igual a 0%.');
   }
 
   if (costo === 0) {
     return 0;
   }
 
-  const factorMargen = 1 - (margen / 100);
-  const precio = costo / factorMargen;
+  const factorRecargo = 1 + (porcentaje / 100);
+  const precio = costo * factorRecargo;
 
   // Redondeo estándar a 2 decimales para precisión interna
   return Math.round(precio * 100) / 100;
 }
+
+// Alias de retrocompatibilidad con la arquitectura previa
+export const calcularPrecioGondola = calcularPrecioMostrador;
 
 export function calcularCostoRealConIva(precioCompra) {
   const compra = Number(precioCompra);
@@ -49,11 +55,13 @@ export function validarDatosPrecio(costoReal, margenGanancia, precioCompra = 0) 
   }
 
   if (isNaN(costo) || costo < 0) {
-    errors.push('El costo real no puede ser negativo.');
+    errors.push('El costo real o precio de compra no puede ser negativo.');
   }
 
-  if (isNaN(margen) || margen < 0 || margen >= 100) {
-    errors.push('El margen de ganancia debe estar entre 0% y 99.99%.');
+  if (isNaN(margen) || margen < 0) {
+    errors.push('El porcentaje de ganancia o recargo debe ser mayor o igual a 0%.');
+  } else if (margen > 999.99) {
+    errors.push('El porcentaje de ganancia o recargo no puede exceder 999.99%.');
   }
 
   return {
@@ -63,6 +71,7 @@ export function validarDatosPrecio(costoReal, margenGanancia, precioCompra = 0) 
 }
 
 export default {
+  calcularPrecioMostrador,
   calcularPrecioGondola,
   calcularCostoRealConIva,
   validarDatosPrecio
