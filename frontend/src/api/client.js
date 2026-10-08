@@ -3,7 +3,16 @@
  */
 
 // Normaliza la URL base de la API para soportar URLs completas o relativas
-const rawApiUrl = import.meta.env.VITE_API_URL || '/api';
+let rawApiUrl = (import.meta.env.VITE_API_URL || '/api').trim();
+
+// Si se configuró un dominio externo sin https:// (ej: backend.up.railway.app), anteponer https://
+if (rawApiUrl && !rawApiUrl.startsWith('/') && !rawApiUrl.startsWith('http://') && !rawApiUrl.startsWith('https://')) {
+  rawApiUrl = `https://${rawApiUrl}`;
+}
+
+// Si se incluyó accidentalmente /health al final, removerlo
+rawApiUrl = rawApiUrl.replace(/\/health\/?$/, '');
+
 const cleanUrl = rawApiUrl.replace(/\/+$/, '');
 const API_BASE = cleanUrl.endsWith('/api') ? cleanUrl : (cleanUrl === '' ? '/api' : `${cleanUrl}/api`);
 
@@ -27,14 +36,18 @@ export async function apiRequest(endpoint, { method = 'GET', body = null, header
   try {
     response = await fetch(`${API_BASE}${endpoint}`, config);
   } catch (networkError) {
-    throw new Error('No se pudo conectar con el servidor. Verificá tu conexión a internet.');
+    throw new Error('No se pudo conectar con el servidor. Verificá tu conexión a internet o el estado del backend.');
   }
 
   let data;
   try {
     data = await response.json();
   } catch (jsonError) {
-    data = { message: 'Respuesta inesperada del servidor.' };
+    data = { 
+      message: response.status === 405 
+        ? 'Error 405 (Método no permitido): La petición no está llegando al backend de Railway. Verificá VITE_API_URL en Vercel.'
+        : `Respuesta inesperada del servidor (HTTP ${response.status}). Verificá que el backend esté activo.`
+    };
   }
 
   if (!response.ok) {
