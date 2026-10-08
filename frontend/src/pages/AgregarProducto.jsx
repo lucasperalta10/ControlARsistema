@@ -46,22 +46,27 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
     }
   };
 
-  // Sincronizar costo real cuando cambia precio de compra si costo real no fue editado
+  // Sincronizar costo real cuando cambia precio de compra aplicando automáticamente 21% de IVA
   const handlePrecioCompraChange = (val) => {
     setPrecioCompra(val);
-    if (!costoReal || costoReal === precioCompra) {
+    const num = Number(val);
+    if (!isNaN(num) && num > 0) {
+      const costoConIva = Math.round(num * 1.21 * 100) / 100;
+      setCostoReal(String(costoConIva));
+    } else {
       setCostoReal(val);
     }
   };
 
-  // Aplicar cálculo de fraccionado (ej. $4000 / 400g = $10/g)
+  // Aplicar cálculo de fraccionado (ej. $4000 / 400g = $10/g + 21% IVA)
   const aplicarFraccionado = () => {
     const pPrecio = Number(paquetePrecio);
     const pContenido = Number(paqueteContenido);
     if (pPrecio > 0 && pContenido > 0) {
       const costoUnitario = Math.round((pPrecio / pContenido) * 100) / 100;
+      const costoConIva = Math.round(costoUnitario * 1.21 * 100) / 100;
       setPrecioCompra(String(costoUnitario));
-      setCostoReal(String(costoUnitario));
+      setCostoReal(String(costoConIva));
       setStockInicial(String(pContenido));
       setMostrarCalculadorFraccionado(false);
     }
@@ -329,7 +334,7 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               <div className="form-group">
-                <label className="form-label">Precio de compra ($)</label>
+                <label className="form-label">Precio compra neto ($)</label>
                 <input
                   type="number"
                   step="any"
@@ -339,10 +344,11 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
                   value={precioCompra}
                   onChange={(e) => handlePrecioCompraChange(e.target.value)}
                 />
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Sin IVA</span>
               </div>
 
               <div className="form-group">
-                <label className="form-label">Costo real ($) *</label>
+                <label className="form-label">Costo real (+21% IVA) ($) *</label>
                 <input
                   type="number"
                   step="any"
@@ -353,6 +359,7 @@ export function AgregarProducto({ onProductCreated, onCancel }) {
                   onChange={(e) => setCostoReal(e.target.value)}
                   required
                 />
+                <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 600 }}>Incluye 21% IVA</span>
               </div>
             </div>
 

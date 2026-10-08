@@ -1,5 +1,5 @@
 import { query } from '../config/db.js';
-import { calcularPrecioGondola, validarDatosPrecio } from '../services/precioService.js';
+import { calcularPrecioGondola, validarDatosPrecio, calcularCostoRealConIva } from '../services/precioService.js';
 import { registrarActividad } from '../services/actividadService.js';
 
 function calcularEstadoStock(stockActual, stockMinimo) {
@@ -128,7 +128,15 @@ export async function crearProducto(req, res, next) {
       });
     }
 
-    const validacion = validarDatosPrecio(costo_real, margen_ganancia, precio_compra);
+    const numPrecioCompra = Number(precio_compra) || 0;
+    let finalCostoReal = Number(costo_real);
+
+    // Si no se proporcionó costo_real o es 0 y hay precio de compra, aplicar automáticamente el 21% de IVA
+    if ((isNaN(finalCostoReal) || finalCostoReal === 0) && numPrecioCompra > 0) {
+      finalCostoReal = calcularCostoRealConIva(numPrecioCompra);
+    }
+
+    const validacion = validarDatosPrecio(finalCostoReal, margen_ganancia, numPrecioCompra);
     if (!validacion.valido) {
       return res.status(400).json({ success: false, message: validacion.errores.join(' ') });
     }
@@ -141,7 +149,7 @@ export async function crearProducto(req, res, next) {
     }
 
     // Backend es la fuente de verdad del precio
-    const precioGondola = calcularPrecioGondola(costo_real, margen_ganancia);
+    const precioGondola = calcularPrecioGondola(finalCostoReal, margen_ganancia);
 
     const insertSql = `
       INSERT INTO productos (
@@ -154,8 +162,8 @@ export async function crearProducto(req, res, next) {
       nombre.trim(),
       categoria_id ? Number(categoria_id) : null,
       unidad_venta,
-      Number(precio_compra),
-      Number(costo_real),
+      numPrecioCompra,
+      finalCostoReal,
       Number(margen_ganancia),
       precioGondola,
       stockIni,
@@ -225,8 +233,11 @@ export async function actualizarProducto(req, res, next) {
     const nuevoNombre = nombre ? nombre.trim() : anterior.nombre;
     const nuevaCategoria = categoria_id !== undefined ? (categoria_id ? Number(categoria_id) : null) : anterior.categoria_id;
     const nuevaUnidad = unidad_venta || anterior.unidad_venta;
-    const nuevoPrecioCompra = precio_compra !== undefined ? Number(precio_compra) : Number(anterior.precio_compra);
-    const nuevoCostoReal = costo_real !== undefined ? Number(costo_real) : Number(anterior.costo_real);
+    let nuevoCostoReal = costo_real !== undefined ? Number(costo_real) : Number(anterior.costo_real);
+    // Si se actualizó el precio de compra y no se envió un costo real específico, recalcular costo real con 21% IVA
+    if (precio_compra !== undefined && (costo_real === undefined || Number(costo_real) === 0) && nuevoPrecioCompra > 0) {
+      nuevoCostoReal = calcularCostoRealConIva(nuevoPrecioCompra);
+    }
     const nuevoMargen = margen_ganancia !== undefined ? Number(margen_ganancia) : Number(anterior.margen_ganancia);
     const nuevoStockMin = stock_minimo !== undefined ? Number(stock_minimo) : Number(anterior.stock_minimo);
 

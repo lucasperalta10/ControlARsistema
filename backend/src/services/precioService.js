@@ -2,7 +2,7 @@
  * Servicio de Cálculo de Precios para ControlAR v1.0
  * 
  * Regla oficial del negocio:
- *   Precio de góndola = Costo real / (1 - (Margen / 100))
+ *   Precio de góndola = Costo real (21% IVA incluido) / (1 - (Margen / 100))
  * 
  * Restricciones:
  *   - Margen >= 0 y Margen < 100
@@ -32,6 +32,12 @@ export function calcularPrecioGondola(costoReal, margenGanancia) {
   return Math.round(precio * 100) / 100;
 }
 
+export function calcularCostoRealConIva(precioCompra) {
+  const compra = Number(precioCompra);
+  if (isNaN(compra) || compra <= 0) return 0;
+  return Math.round(compra * 1.21 * 100) / 100;
+}
+
 export function validarDatosPrecio(costoReal, margenGanancia, precioCompra) {
   const errors = [];
   const costo = Number(costoReal);
@@ -58,5 +64,6 @@ export function validarDatosPrecio(costoReal, margenGanancia, precioCompra) {
 
 export default {
   calcularPrecioGondola,
+  calcularCostoRealConIva,
   validarDatosPrecio
 };

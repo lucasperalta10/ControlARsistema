@@ -268,17 +268,27 @@ export function DetalleProducto({ productoId, onBack, onProductUpdated, onProduc
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <div className="form-group">
-                    <label className="form-label">Precio compra ($)</label>
+                    <label className="form-label">Precio compra neto ($)</label>
                     <input
                       type="number"
                       step="any"
                       className="form-input"
                       value={precioCompraEdit}
-                      onChange={(e) => setPrecioCompraEdit(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setPrecioCompraEdit(val);
+                        const num = Number(val);
+                        if (!isNaN(num) && num > 0) {
+                          setCostoRealEdit(String(Math.round(num * 1.21 * 100) / 100));
+                        } else {
+                          setCostoRealEdit(val);
+                        }
+                      }}
                     />
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Sin IVA</span>
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Costo real ($)</label>
+                    <label className="form-label">Costo real (+21% IVA) ($)</label>
                     <input
                       type="number"
                       step="any"
@@ -287,6 +297,7 @@ export function DetalleProducto({ productoId, onBack, onProductUpdated, onProduc
                       onChange={(e) => setCostoRealEdit(e.target.value)}
                       required
                     />
+                    <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 600 }}>Incluye 21% IVA</span>
                   </div>
                 </div>
 
@@ -333,12 +344,12 @@ export function DetalleProducto({ productoId, onBack, onProductUpdated, onProduc
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.88rem' }}>
               <div>
-                <span style={{ color: 'var(--text-muted)' }}>Precio de compra:</span>
+                <span style={{ color: 'var(--text-muted)' }}>Precio compra (Neto):</span>
                 <div style={{ fontWeight: 700, marginTop: '2px' }}>{formatCurrency(producto.precio_compra)}</div>
               </div>
               <div>
-                <span style={{ color: 'var(--text-muted)' }}>Costo real:</span>
-                <div style={{ fontWeight: 700, marginTop: '2px' }}>{formatCurrency(producto.costo_real)}</div>
+                <span style={{ color: 'var(--text-muted)' }}>Costo real (+21% IVA):</span>
+                <div style={{ fontWeight: 700, marginTop: '2px', color: '#10b981' }}>{formatCurrency(producto.costo_real)}</div>
               </div>
               <div>
                 <span style={{ color: 'var(--text-muted)' }}>Margen de ganancia:</span>
