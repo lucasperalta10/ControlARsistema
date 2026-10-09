@@ -198,11 +198,11 @@ async function setupSqliteTables() {
   // 4. Congelado X (kg, stock 0, min 2 -> AGOTADO)
   // 5. Bebida Cola 1.5L (unidades, stock 12, min 6 -> DISPONIBLE)
   const productosDemo = [
-    [1, 'Snack Frutos Secos', 1, 'Gramo', 10.0, 10.0, 60.0, 25.0, 120.0, 200.0, 1],
-    [2, 'Jugo de Naranja 1L', 2, 'Unidad', 600.0, 600.0, 40.0, 1000.0, 2.0, 5.0, 1],
-    [3, 'Yogur Natural Artesanal', 7, 'Unidad', 900.0, 900.0, 40.0, 1500.0, 1.0, 4.0, 1],
-    [4, 'Hamburguesas Caseras Congeladas', 6, 'Kilogramo', 4400.0, 4400.0, 45.0, 8000.0, 0.0, 2.5, 1],
-    [5, 'Detergente Artesanal 500ml', 3, 'Unidad', 1300.0, 1300.0, 35.0, 2000.0, 15.0, 5.0, 1]
+    [1, 'Snack Frutos Secos', 1, 'Gramo', 10.0, 10.0, 60.0, 16.0, 120.0, 200.0, 1],
+    [2, 'Jugo de Naranja 1L', 2, 'Unidad', 600.0, 600.0, 40.0, 840.0, 2.0, 5.0, 1],
+    [3, 'Yogur Natural Artesanal', 7, 'Unidad', 900.0, 900.0, 40.0, 1260.0, 1.0, 4.0, 1],
+    [4, 'Hamburguesas Caseras Congeladas', 6, 'Kilogramo', 4400.0, 4400.0, 45.0, 6380.0, 0.0, 2.5, 1],
+    [5, 'Detergente Artesanal 500ml', 3, 'Unidad', 1300.0, 1300.0, 35.0, 1755.0, 15.0, 5.0, 1]
   ];
 
   for (const p of productosDemo) {
@@ -239,6 +239,24 @@ async function initializeMySqlSchema(conn) {
     }
   } catch (err) {
     console.warn(`[DB] Advertencia al verificar/inicializar esquema MySQL: ${err.message}`);
+  }
+}
+
+// Asegura que los precios de mostrador existentes coincidan con la fórmula oficial
+async function sincronizarPreciosMostrador() {
+  try {
+    const updateSql = `
+      UPDATE productos 
+      SET precio_gondola = ROUND(costo_real * (1 + (margen_ganancia / 100)), 2)
+      WHERE activo = 1 AND costo_real > 0 AND margen_ganancia >= 0
+    `;
+    if (mode === 'mysql' && pool) {
+      await pool.execute(updateSql);
+    } else if (sqliteDb) {
+      await runSqlite(updateSql);
+    }
+  } catch (syncErr) {
+    console.warn(`[DB] Advertencia al sincronizar precios de mostrador: ${syncErr.message}`);
   }
 }
 
@@ -297,8 +315,10 @@ export async function connectDB() {
     } catch (confErr) {
       // Ignorar si ya existe
     }
+
     conn.release();
     mode = 'mysql';
+    await sincronizarPreciosMostrador();
   } catch (err) {
     if (err.code === 'ER_BAD_DB_ERROR') {
       try {
@@ -321,6 +341,7 @@ export async function connectDB() {
 
         console.log(`[DB] Base de datos MySQL '${database}' creada e inicializada correctamente.`);
         mode = 'mysql';
+        await sincronizarPreciosMostrador();
         return;
       } catch (createErr) {
         console.warn(`[DB] No se pudo auto-crear base MySQL: ${createErr.message}`);
@@ -329,6 +350,7 @@ export async function connectDB() {
 
     console.warn(`[DB] MySQL no disponible (${err.message}). Activando modo fallback SQLite para desarrollo local.`);
     await initSqlite();
+    await sincronizarPreciosMostrador();
   }
 }
 

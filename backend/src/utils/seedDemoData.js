@@ -27,14 +27,14 @@ async function seedData() {
     }
   }
 
-  // Productos demostrativos basados en la especificación de controlar.md:
-  // 1. Snack Frutos Secos (400g bolsa, costo unitario por gramo = $10, margen 60% -> $25 por gramo, stock 120g, min 200g -> REPONER)
-  // 2. Jugo de Naranja 1L (costo $600, margen 40% -> $1000, stock 2, min 5 -> REPONER)
-  // 3. Yogur Natural Artesanal (costo $900, margen 40% -> $1500, stock 1, min 4 -> REPONER)
-  // 4. Hamburguesas Caseras (kg, costo $4400, margen 45% -> $8000, stock 0, min 2.5 -> AGOTADO)
-  // 5. Detergente Artesanal 500ml (costo $1300, margen 35% -> $2000, stock 15, min 5 -> DISPONIBLE)
-  // 6. Bebida Cola Artesanal 1.5L (costo $1200, margen 40% -> $2000, stock 24, min 10 -> DISPONIBLE)
-  // 7. Alfajor Artesanal Chocolate (costo $500, margen 50% -> $1000, stock 30, min 10 -> DISPONIBLE)
+  // Productos demostrativos basados en la fórmula oficial de mostrador (costo × (1 + margen/100)):
+  // 1. Snack Frutos Secos (400g bolsa, costo unitario por gramo = $10, recargo 60% -> $16 por gramo, stock 120g, min 200g -> REPONER)
+  // 2. Jugo de Naranja 1L (costo $600, recargo 40% -> $840, stock 2, min 5 -> REPONER)
+  // 3. Yogur Natural Artesanal (costo $900, recargo 40% -> $1260, stock 1, min 4 -> REPONER)
+  // 4. Hamburguesas Caseras (kg, costo $4400, recargo 45% -> $6380, stock 0, min 2.5 -> AGOTADO)
+  // 5. Detergente Artesanal 500ml (costo $1300, recargo 35% -> $1755, stock 15, min 5 -> DISPONIBLE)
+  // 6. Bebida Cola Artesanal 1.5L (costo $1200, recargo 40% -> $1680, stock 24, min 10 -> DISPONIBLE)
+  // 7. Alfajor Artesanal Chocolate (costo $500, recargo 50% -> $750, stock 30, min 10 -> DISPONIBLE)
 
   const demo = [
     {

@@ -69,29 +69,31 @@ El sistema no cuenta con registro público; los accesos son controlados internam
 
 ## 4. Regla Oficial de Cálculo de Precios y Fraccionados
 
-### La Fórmula de Góndola
-En ControlAR, el precio al público no se calcula multiplicando arbitrariamente por un factor (ej: *Costo × 1.50* no equivale a un margen del 50%). Se utiliza la fórmula oficial de margen comercial:
+### La Fórmula de Mostrador (Góndola)
+En ControlAR, el precio al público se calcula aplicando el porcentaje de ganancia o recargo directamente sobre el precio de compra / costo real:
 
-$$\boxed{\text{Precio de góndola} = \frac{\text{Costo real}}{1 - \left(\frac{\text{Margen}}{100}\right)}}$$
+$$\boxed{\text{Precio de mostrador} = \text{Costo real} \times \left(1 + \frac{\text{Porcentaje de Ganancia}}{100}\right)}$$
+
+El porcentaje representa un recargo directo sobre el costo (ej: Costo + 50% = Costo × 1.50).
 
 #### Ejemplos Prácticos:
-* **Costo Real:** $\$10.000$ | **Margen:** $50\%$
-  $$\text{Precio} = \frac{10.000}{1 - 0.50} = \frac{10.000}{0.50} = \mathbf{\$20.000}$$
-  *(Ganancia: $\$10.000$ sobre el precio final de venta $\rightarrow 50\%$).*
+* **Costo Real:** $\$10.000$ | **Recargo / Ganancia:** $50\%$
+  $$\text{Precio} = 10.000 \times \left(1 + \frac{50}{100}\right) = 10.000 \times 1.50 = \mathbf{\$15.000}$$
+  *(Ganancia: $\$5.000$ de recargo sobre el costo $\rightarrow 50\%$).*
 
-* **Costo Real:** $\$10.000$ | **Margen:** $60\%$
-  $$\text{Precio} = \frac{10.000}{1 - 0.60} = \frac{10.000}{0.40} = \mathbf{\$25.000}$$
+* **Costo Real:** $\$10.000$ | **Recargo / Ganancia:** $60\%$
+  $$\text{Precio} = 10.000 \times \left(1 + \frac{60}{100}\right) = 10.000 \times 1.60 = \mathbf{\$16.000}$$
 
 #### Validaciones del Backend:
 * Margen mínimo: $0\%$ (se vende al costo).
-* Margen máximo permitido: $99.99\%$ (un margen de $100\%$ provocaría división por cero).
+* Margen máximo permitido: $999.99\%$.
 * Costo real $\ge 0$.
 
 ### Productos Fraccionados
 Negocios como despensas suelen comprar paquetes cerrados (ej: una bolsa de frutos secos de $400\text{ g}$ a $\$4.000$) y venderlos fraccionados por gramos.
 1. La aplicación incluye un **asistente de fraccionado** en la carga de producto donde el usuario ingresa el costo del paquete y su contenido.
 2. El sistema calcula automáticamente el costo unitario por gramo ($\$4.000 / 400 = \$10/\text{g}$).
-3. Aplicando el margen correspondiente ($60\%$), el precio de góndola resulta en $\$25$ por gramo, permitiendo registrar salidas fraccionadas exactas ($50\text{ g}$, $120\text{ g}$, etc.).
+3. Aplicando el recargo correspondiente ($60\%$), el precio de mostrador resulta en $\$16$ por gramo ($10 \times 1.60 = \$16$), permitiendo registrar salidas fraccionadas exactas ($50\text{ g}$, $120\text{ g}$, etc.).
 
 ---
 

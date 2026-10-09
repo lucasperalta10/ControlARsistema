@@ -516,11 +516,11 @@ El margen de categoría no debe sobrescribir obligatoriamente el margen específ
 La fórmula oficial de ControlAR será:
 
 ```text
-Precio de góndola =
-Costo real / (1 - Margen)
+Precio de mostrador / góndola =
+Costo real × (1 + Margen / 100)
 ```
 
-El margen debe convertirse de porcentaje a decimal.
+El margen representa un recargo sobre el costo.
 
 Ejemplo:
 
@@ -529,9 +529,9 @@ Costo real = $10.000
 Margen = 50%
 
 Precio =
-10.000 / (1 - 0,50)
+10.000 × (1 + 0,50)
 
-Precio = $20.000
+Precio = $15.000
 ```
 
 Otro ejemplo:
@@ -541,9 +541,9 @@ Costo real = $10.000
 Margen = 60%
 
 Precio =
-10.000 / (1 - 0,60)
+10.000 × (1 + 0,60)
 
-Precio = $25.000
+Precio = $16.000
 ```
 
 Importante:
@@ -579,18 +579,18 @@ Costo por gramo:
 $4.000 / 400 = $10 por gramo
 ```
 
-Con margen del 60%:
+Con recargo del 60%:
 
 ```text
-$10 / (1 - 0,60) = $25 por gramo
+$10 × (1 + 0,60) = $16 por gramo
 ```
 
 Por lo tanto:
 
 ```text
-50 g  → $1.250
-100 g → $2.500
-150 g → $3.750
+50 g  → $800
+100 g → $1.600
+150 g → $2.400
 ```
 
 La arquitectura debe permitir este comportamiento sin necesidad de crear un producto diferente para cada cantidad.
@@ -876,7 +876,7 @@ El precio de góndola debe calcularse utilizando:
 
 ```text
 precio_gondola =
-costo_real / (1 - margen_ganancia)
+costo_real * (1 + margen_ganancia / 100)
 ```
 
 El backend debe validar los datos.
@@ -1073,7 +1073,7 @@ El frontend puede enviar:
 Pero el backend debe validar y calcular:
 
 ```text
-precio_gondola = costo_real / (1 - margen/100)
+precio_gondola = costo_real * (1 + margen / 100)
 ```
 
 El cliente no debe poder enviar arbitrariamente un precio final para saltarse la lógica.
