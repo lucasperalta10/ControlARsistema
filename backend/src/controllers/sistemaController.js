@@ -17,7 +17,7 @@ export async function getEstado(req, res, next) {
       success: true,
       sistema: {
         nombre: 'ControlAR API',
-        version: '1.0.0',
+        version: '1.0.5',
         entorno: process.env.NODE_ENV || 'development',
         uptimeSegundos: Math.floor(process.uptime()),
         timestamp: new Date().toISOString()

@@ -48,7 +48,7 @@ export function Header({ activeTab, onTabChange, reponerCount = 0, onNavigateAdm
         <div>
           <div className="header-brand-title">
             ControlAR
-            <span className="header-brand-badge">v1.0.1</span>
+            <span className="header-brand-badge">v1.0.5</span>
           </div>
           <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1 }}>
             Victoria Productos Artesanales

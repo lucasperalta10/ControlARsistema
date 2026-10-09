@@ -59,7 +59,7 @@ export function AcercaDe() {
             fontWeight: 700,
             marginTop: '14px'
           }}>
-            Versión 1.0.1 (Responsive Update)
+            Versión 1.0.5
           </div>
 
           <div style={{ marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', textAlign: 'left', fontSize: '0.85rem' }}>
@@ -81,10 +81,29 @@ export function AcercaDe() {
 
         {/* Bloque Negocio Victoria Productos Artesanales */}
         <div className="card" style={{ textAlign: 'center', padding: '24px 18px', marginBottom: 0 }}>
-          {/* Placeholder Logo Negocio */}
-          <div className="placeholder-box" style={{ width: '100px', height: '100px', margin: '0 auto 16px auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <Store size={36} color="var(--warning)" />
-            <span style={{ fontSize: '0.65rem', marginTop: '4px' }}>[Logo Negocio]</span>
+          {/* Logo Oficial Negocio Victoria */}
+          <div style={{
+            width: '108px',
+            height: '108px',
+            margin: '0 auto 16px auto',
+            borderRadius: '22px',
+            overflow: 'hidden',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#ffffff'
+          }}>
+            <img
+              src="/VictoriaProductosLOGO.jpeg"
+              alt="Logo oficial Victoria Productos Artesanales"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                display: 'block'
+              }}
+            />
           </div>
 
           <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff' }}>
@@ -95,7 +114,7 @@ export function AcercaDe() {
           </p>
 
           <div style={{ marginTop: '16px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Los logotipos y recursos gráficos oficiales se incorporarán una vez definidos por el negocio.
+            Identidad visual y comercial oficial del negocio.
           </div>
         </div>
       </div>
