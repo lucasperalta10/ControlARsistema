@@ -59,7 +59,7 @@ export function AcercaDe() {
             fontWeight: 700,
             marginTop: '14px'
           }}>
-            Versión 1.0.5
+            Versión 1.0.5b
           </div>
 
           <div style={{ marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', textAlign: 'left', fontSize: '0.85rem' }}>

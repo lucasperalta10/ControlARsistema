@@ -1,7 +1,7 @@
 {
   "name": "controlar-frontend",
   "private": true,
-  "version": "1.0.5",
+  "version": "1.0.5b",
   "type": "module",
   "scripts": {
     "dev": "vite",

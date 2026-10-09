@@ -1,4 +1,4 @@
-# ControlAR v1.0.5
+# ControlAR v1.0.5b
 
 **Sistema de gestión para Victoria Productos Artesanales**
 

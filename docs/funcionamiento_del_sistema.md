@@ -1,6 +1,6 @@
 # Guía Integral de Arquitectura y Funcionamiento de ControlAR
 
-**Versión del Sistema:** 1.0.1  
+**Versión del Sistema:** 1.0.5b  
 **Año:** 2026  
 **Desarrollador:** Lucas  
 **Negocio de Referencia:** Victoria Productos Artesanales  

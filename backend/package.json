@@ -1,6 +1,6 @@
 {
   "name": "controlar-backend",
-  "version": "1.0.5",
+  "version": "1.0.5b",
   "type": "module",
   "description": "Backend API para ControlAR v1.0 - Victoria Productos Artesanales",
   "main": "src/server.js",
