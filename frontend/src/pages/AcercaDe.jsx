@@ -92,7 +92,7 @@ export function AcercaDe() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: '#ffffff'
+            background: '#000000'
           }}>
             <img
               src="/VictoriaProductosLOGO.png"
