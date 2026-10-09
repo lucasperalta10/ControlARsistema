@@ -95,7 +95,7 @@ export function AcercaDe() {
             background: '#ffffff'
           }}>
             <img
-              src="/VictoriaProductosLOGO.jpeg"
+              src="/VictoriaProductosLOGO.png"
               alt="Logo oficial Victoria Productos Artesanales"
               style={{
                 width: '100%',
