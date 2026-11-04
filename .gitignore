@@ -30,3 +30,6 @@ yarn-error.log*
 # Sistema Operativo
 .DS_Store
 Thumbs.db
+# Documentos
+docs/auditoria_tienda_ropa.md
+docs/recorrido_precio_mostrador.md

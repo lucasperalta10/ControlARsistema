@@ -1,4 +1,8 @@
-import { connectDB, query } from '../src/config/db.js';
+if (!process.env.DB_DRIVER && !process.env.MYSQLHOST && !process.env.MYSQL_URL) {
+  process.env.DB_DRIVER = 'sqlite';
+}
+
+import { connectDB, query, closeDB } from '../src/config/db.js';
 import { getMargenPredeterminado, setMargenPredeterminado } from '../src/services/configuracionService.js';
 import { calcularPrecioGondola } from '../src/services/precioService.js';
 

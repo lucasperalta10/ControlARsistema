@@ -1,6 +1,10 @@
+if (!process.env.DB_DRIVER && !process.env.MYSQLHOST && !process.env.MYSQL_URL) {
+  process.env.DB_DRIVER = 'sqlite';
+}
+
 import { calcularPrecioMostrador, calcularPrecioGondola, validarDatosPrecio } from '../src/services/precioService.js';
 import { calculateMostradorPreview } from '../../frontend/src/utils/formatters.js';
-import { connectDB, query } from '../src/config/db.js';
+import { connectDB, query, closeDB } from '../src/config/db.js';
 import { getMargenPredeterminado, setMargenPredeterminado } from '../src/services/configuracionService.js';
 
 async function runTests() {

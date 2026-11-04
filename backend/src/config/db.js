@@ -260,11 +260,88 @@ async function sincronizarPreciosMostrador() {
   }
 }
 
-// Connect to MySQL or fall back to SQLite
-export async function connectDB() {
-  if (process.env.DB_DRIVER === 'sqlite') {
-    await initSqlite();
-    return;
+// Variable / testing hook
+let connectionFactory = null;
+
+export function _setConnectionFactoryForTesting(factory) {
+  connectionFactory = factory;
+}
+
+export function isProduction() {
+  const nodeEnv = (process.env.NODE_ENV || '').toLowerCase().trim();
+  const isProdEnv = nodeEnv === 'production';
+  const isRailway = Boolean(
+    process.env.RAILWAY_ENVIRONMENT ||
+    process.env.RAILWAY_PROJECT_ID ||
+    process.env.RAILWAY_SERVICE_ID ||
+    process.env.RAILWAY_STATIC_URL
+  );
+  return isProdEnv || isRailway;
+}
+
+export function isSqliteAllowed() {
+  if (isProduction()) {
+    return false;
+  }
+  const driver = (process.env.DB_DRIVER || '').toLowerCase().trim();
+  return driver === 'sqlite';
+}
+
+export function maskUrl(rawUrl) {
+  if (!rawUrl) return '';
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.password) {
+      parsed.password = '***';
+    }
+    return parsed.toString();
+  } catch {
+    return String(rawUrl).replace(/:([^:@/]+)@/, ':***@');
+  }
+}
+
+export function sanitizeErrorMessage(message) {
+  if (!message) return '';
+  return String(message)
+    .replace(/:([^:@/\s]+)@/g, ':***@')
+    .replace(/password\s*=\s*['"]?[^'",\s]+['"]?/gi, 'password=***');
+}
+
+export function getSafeConnectionDetails() {
+  const connectionUrl = process.env.MYSQL_URL || process.env.DATABASE_URL;
+  if (connectionUrl) {
+    return `URL (${maskUrl(connectionUrl)})`;
+  }
+  const host = process.env.MYSQLHOST || process.env.DB_HOST || 'localhost';
+  const port = Number(process.env.MYSQLPORT || process.env.DB_PORT) || 3306;
+  const user = process.env.MYSQLUSER || process.env.DB_USER || 'root';
+  const database = process.env.MYSQLDATABASE || process.env.DB_NAME || 'controlar_db';
+  return `${user}@${host}:${port}/${database}`;
+}
+
+export function isTransientError(err) {
+  if (!err) return false;
+  const transientCodes = [
+    'ECONNREFUSED',
+    'ETIMEDOUT',
+    'EHOSTUNREACH',
+    'ENETUNREACH',
+    'EAI_AGAIN',
+    'ENOTFOUND',
+    'ECONNRESET',
+    'PROTOCOL_CONNECTION_LOST',
+    'ER_CON_COUNT_ERROR',
+    'PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR'
+  ];
+  return (
+    transientCodes.includes(err.code) ||
+    /connection refused|timeout|network|econnrefused|econnreset/i.test(err.message || '')
+  );
+}
+
+async function attemptMySqlConnection() {
+  if (connectionFactory) {
+    return await connectionFactory();
   }
 
   const connectionUrl = process.env.MYSQL_URL || process.env.DATABASE_URL;
@@ -274,92 +351,157 @@ export async function connectDB() {
   const password = process.env.MYSQLPASSWORD !== undefined ? process.env.MYSQLPASSWORD : (process.env.DB_PASSWORD || '');
   const database = process.env.MYSQLDATABASE || process.env.DB_NAME || 'controlar_db';
 
+  let currentPool = null;
+  if (connectionUrl) {
+    currentPool = mysql.createPool(connectionUrl);
+  } else {
+    currentPool = mysql.createPool({
+      host,
+      port,
+      user,
+      password,
+      database,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0
+    });
+  }
+
   try {
-    // Intentar conexión directa (soporta Railway MYSQL_URL o variables individuales)
-    if (connectionUrl) {
-      pool = mysql.createPool(connectionUrl);
-    } else {
-      pool = mysql.createPool({
-        host, port, user, password, database,
-        waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0
-      });
-    }
-
-    const conn = await pool.getConnection();
-    console.log(`[DB] Conectado exitosamente a MySQL (${connectionUrl ? 'URL' : `${host}:${port}/${database}`})`);
-    
-    // Auto-inicializar tablas si la base de datos está vacía (ej: nuevo servicio en Railway)
-    await initializeMySqlSchema(conn);
-
-    try {
-      await conn.query('ALTER TABLE usuarios ADD COLUMN puede_gestionar_categorias BOOLEAN NOT NULL DEFAULT FALSE');
-    } catch (migErr) {
-      // Ignorar si la columna ya existe
-    }
-
-    try {
-      await conn.query(`
-        CREATE TABLE IF NOT EXISTS configuracion (
-          clave VARCHAR(50) PRIMARY KEY,
-          valor TEXT NOT NULL,
-          descripcion VARCHAR(255) NULL,
-          actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-      `);
-      await conn.query(`
-        INSERT IGNORE INTO configuracion (clave, valor, descripcion)
-        VALUES ('margen_predeterminado', '50.00', 'Porcentaje predeterminado inicial para productos nuevos')
-      `);
-    } catch (confErr) {
-      // Ignorar si ya existe
-    }
-
-    conn.release();
-    mode = 'mysql';
-    await sincronizarPreciosMostrador();
+    const conn = await currentPool.getConnection();
+    return { pool: currentPool, conn };
   } catch (err) {
-    if (err.code === 'ER_BAD_DB_ERROR') {
-      try {
-        console.log(`[DB] Base de datos '${database}' no encontrada en MySQL. Intentando crearla automáticamente...`);
-        const rootConn = await mysql.createConnection({ host, port, user, password });
-        await rootConn.execute(`CREATE DATABASE IF NOT EXISTS \`${database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
-        await rootConn.end();
-
-        // Conectar nuevamente
-        pool = mysql.createPool({
-          host, port, user, password, database,
-          waitForConnections: true,
-          connectionLimit: 10,
-          queueLimit: 0
-        });
-
-        const c = await pool.getConnection();
-        await initializeMySqlSchema(c);
-        c.release();
-
-        console.log(`[DB] Base de datos MySQL '${database}' creada e inicializada correctamente.`);
-        mode = 'mysql';
-        await sincronizarPreciosMostrador();
-        return;
-      } catch (createErr) {
-        console.warn(`[DB] No se pudo auto-crear base MySQL: ${createErr.message}`);
-      }
+    if (currentPool) {
+      await currentPool.end().catch(() => {});
     }
+    throw err;
+  }
+}
 
-    console.warn(`[DB] MySQL no disponible (${err.message}). Activando modo fallback SQLite para desarrollo local.`);
+const MAX_CONNECT_RETRIES = 5;
+const INITIAL_RETRY_DELAY_MS = 1000;
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Connect to MySQL or safely handle fallback/exit
+export async function connectDB() {
+  // 1. Verificación de SQLite explícito
+  if (process.env.DB_DRIVER === 'sqlite') {
+    if (isProduction()) {
+      const errMsg = '[DB] BLOQUEO DE SEGURIDAD: SQLite está estrictamente prohibido en entornos de producción o Railway. Configura MySQL para continuar.';
+      console.error(errMsg);
+      throw new Error(errMsg);
+    }
     await initSqlite();
     await sincronizarPreciosMostrador();
+    return;
   }
+
+  // 2. Conexión a MySQL con reintentos para fallos transitorios
+  let lastError = null;
+  const maxRetries = Number(process.env.DB_CONNECT_RETRIES) || MAX_CONNECT_RETRIES;
+  const initialDelay = Number(process.env.DB_RETRY_DELAY_MS) || INITIAL_RETRY_DELAY_MS;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const { pool: activePool, conn } = await attemptMySqlConnection();
+      pool = activePool;
+      mode = 'mysql';
+
+      const safeTarget = getSafeConnectionDetails();
+      if (attempt > 1) {
+        console.log(`[DB] Conectado exitosamente a MySQL tras ${attempt} intentos (${safeTarget})`);
+      } else {
+        console.log(`[DB] Conectado exitosamente a MySQL (${safeTarget})`);
+      }
+
+      // Auto-inicializar tablas si la base de datos está vacía (ej: nuevo servicio en Railway)
+      await initializeMySqlSchema(conn);
+
+      try {
+        await conn.query('ALTER TABLE usuarios ADD COLUMN puede_gestionar_categorias BOOLEAN NOT NULL DEFAULT FALSE');
+      } catch (migErr) {
+        // Ignorar si la columna ya existe
+      }
+
+      try {
+        await conn.query(`
+          CREATE TABLE IF NOT EXISTS configuracion (
+            clave VARCHAR(50) PRIMARY KEY,
+            valor TEXT NOT NULL,
+            descripcion VARCHAR(255) NULL,
+            actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `);
+        await conn.query(`
+          INSERT IGNORE INTO configuracion (clave, valor, descripcion)
+          VALUES ('margen_predeterminado', '50.00', 'Porcentaje predeterminado inicial para productos nuevos')
+        `);
+      } catch (confErr) {
+        // Ignorar si ya existe
+      }
+
+      conn.release();
+      await sincronizarPreciosMostrador();
+      return;
+    } catch (err) {
+      lastError = err;
+      const safeTarget = getSafeConnectionDetails();
+      const safeErrMsg = sanitizeErrorMessage(err.message);
+      const isTransient = isTransientError(err);
+
+      // Si es fallo no transitorio (ej: credenciales inválidas ER_ACCESS_DENIED_ERROR), no reintentar
+      if (!isTransient) {
+        console.error(`[DB] Error no recuperable al conectar a MySQL [${safeTarget}]: ${safeErrMsg} (Código: ${err.code || 'N/A'})`);
+        break;
+      }
+
+      if (attempt < maxRetries) {
+        const delayMs = initialDelay * attempt;
+        console.warn(`[DB] Fallo transitorio de conexión a MySQL [${safeTarget}] (${err.code || safeErrMsg}). Reintento ${attempt}/${maxRetries} en ${delayMs}ms...`);
+        await sleep(delayMs);
+      }
+    }
+  }
+
+  // 3. Si se agotaron los reintentos o hubo error no transitorio
+  const safeTarget = getSafeConnectionDetails();
+  const safeErrMsg = sanitizeErrorMessage(lastError?.message || 'Error de conexión desconocido');
+  const errCode = lastError?.code ? ` (Código: ${lastError.code})` : '';
+
+  if (isProduction()) {
+    console.error(`[DB] ERROR CRÍTICO: No se pudo conectar a MySQL en producción/Railway [${safeTarget}]: ${safeErrMsg}${errCode}.`);
+    console.error(`[DB] POLÍTICA DE SEGURIDAD: El servidor se rehusará a arrancar para proteger la integridad de los datos. SQLite no está permitido.`);
+    throw new Error(`[DB] Falla de conexión a MySQL en producción: ${safeErrMsg}${errCode}`);
+  }
+
+  // En desarrollo local: sólo usar SQLite si está expresamente permitido por configuración
+  if (isSqliteAllowed()) {
+    console.warn(`[DB] MySQL no disponible [${safeTarget}] (${safeErrMsg}${errCode}). Activando SQLite expresamente permitido en desarrollo.`);
+    await initSqlite();
+    await sincronizarPreciosMostrador();
+    return;
+  }
+
+  console.error(`[DB] ERROR: MySQL no disponible [${safeTarget}] (${safeErrMsg}${errCode}).`);
+  console.error(`[DB] El fallback silencioso a SQLite está deshabilitado. Para usar SQLite en desarrollo local, debes configurar explícitamente DB_DRIVER=sqlite.`);
+  throw new Error(`[DB] Fallo de conexión a MySQL y SQLite no está expresamente permitido: ${safeErrMsg}${errCode}`);
 }
 
 // Unified Query Function
 export async function query(sql, params = []) {
   if (mode === 'mysql') {
+    if (!pool) {
+      throw new Error('[DB] Error de consulta: El pool de conexiones MySQL no está inicializado.');
+    }
     const [rows, fields] = await pool.execute(sql, params);
     return rows;
   } else {
+    if (!sqliteDb) {
+      throw new Error('[DB] Error de consulta: La base de datos SQLite no está inicializada.');
+    }
     const trimmed = sql.trim().toUpperCase();
     if (trimmed.startsWith('SELECT') || trimmed.startsWith('SHOW') || trimmed.startsWith('DESCRIBE')) {
       return await allSqlite(sql, params);
@@ -377,8 +519,29 @@ export function getDbMode() {
   return mode;
 }
 
+export async function closeDB() {
+  if (pool) {
+    await pool.end().catch(() => {});
+    pool = null;
+  }
+  if (sqliteDb) {
+    await new Promise(resolve => sqliteDb.close(() => resolve()));
+    sqliteDb = null;
+  }
+  mode = 'mysql';
+}
+
 export default {
   connectDB,
   query,
-  getDbMode
+  getDbMode,
+  closeDB,
+  isProduction,
+  isSqliteAllowed,
+  maskUrl,
+  sanitizeErrorMessage,
+  getSafeConnectionDetails,
+  isTransientError,
+  _setConnectionFactoryForTesting
 };
+
